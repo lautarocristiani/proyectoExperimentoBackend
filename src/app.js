@@ -13,8 +13,11 @@ app.use(express.json())
 // Conexión a la base de datos
 
 pool.getConnection()
-    .then(connection => {
+    .then(async connection => {
         console.log('Conexión exitosa a la base de datos MySQL')
+        const consulta = 'SELECT * FROM `usuarios`'
+        const resultado = await pool.query(consulta)
+        console.log(resultado);
         connection.release() // No olvides liberar la conexión
     })
     .catch(err => {
