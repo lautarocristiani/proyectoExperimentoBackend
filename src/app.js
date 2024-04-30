@@ -38,7 +38,7 @@ app.get("/usuarios", async (req, res) => {
 
 app.post("/usuarios", async (req, res) => {
     const { nombre, apellido, email } = req.body;
-    const consulta = `INSERT INTO "usuarios" ('${nombre}', '${apellido}', '${email}') VALUES ({}, ?, ?)`
+    const consulta = `INSERT INTO usuarios (${nombre}, ${apellido}, ${email}) VALUES (?, ?, ?)`
     const resultado = await pool.query(consulta)
     res.json(resultado)
 })
