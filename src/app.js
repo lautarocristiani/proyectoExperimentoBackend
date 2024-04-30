@@ -21,8 +21,8 @@ pool.getConnection()
         console.error('Error al conectar a la base de datos:', err)
     });
 
-app.listen(process.env.DB_PORT, "0.0.0.0",  () => {
-    console.log(`Servidor iniciado en el puerto ${process.env.DB_PORT}`)
+app.listen(process.env.PORT, "0.0.0.0",  () => {
+    console.log(`Servidor iniciado en el puerto ${process.env.PORT}`)
 });
 
 // Rutas API
