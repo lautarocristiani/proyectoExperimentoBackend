@@ -38,13 +38,13 @@ app.get("/", (req, res) => {
 
 app.get("/usuarios", async (req, res) => {
     const consulta = 'SELECT * FROM `usuarios`'
-    const resultado = await pool.query(consulta)
+    const resultado = await axios.get(consulta)
     res.json(resultado[0])
 })
 
 app.post("/usuarios", async (req, res) => {
     const { nombre, apellido, email } = req.body;
     const consulta = `INSERT INTO usuarios (${nombre}, ${apellido}, ${email}) VALUES (?, ?, ?)`
-    const resultado = await pool.query(consulta)
+    const resultado = await axios.post(consulta)
     res.json(resultado)
 })
