@@ -53,3 +53,36 @@ app.post("/usuarios", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.delete("/usuarios/:id", async (req, res) => {
+    const { id } = req.params;
+    const consulta = `DELETE FROM usuarios WHERE id = ?`;
+
+    try {
+        const resultado = await pool.query(consulta, [id]);
+        if (resultado.affectedRows > 0) {
+            res.status(200).json({ message: "Usuario eliminado correctamente" });
+        } else {
+            res.status(404).json({ message: "Usuario no encontrado" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put("/usuarios", async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, email } = req.body;
+    const consulta = `UPDATE usuarios SET nombre = ?, apellido = ?, email = ? WHERE id = ?`;
+
+    try {
+        const resultado = await pool.query(consulta, [nombre, apellido, email, id]);
+        if (resultado.affectedRows > 0) {
+            res.status(200).json({ message: "Usuario actualizado correctamente" });
+        } else {
+            res.status(404).json({ message: "Usuario no encontrado" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
