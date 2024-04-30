@@ -11,6 +11,27 @@ app.use(cors())
 app.use(express.json())
 
 // Conexión a la base de datos
+
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error("Error al obtener la conexión:", err);
+        return;
+    }
+    console.log("Conexión obtenida del pool.");
+
+    connection.query('SELECT * FROM `usuarios`', (error, results, fields) => {
+        // Asegúrate de liberar la conexión al pool
+        connection.release();
+
+        if (error) {
+            console.error("Error al realizar la consulta:", error);
+            return;
+        }
+
+        console.log(results);
+    });
+});
+
 pool.getConnection()
     .then(connection => {
         console.log('Conexión exitosa a la base de datos MySQL')
