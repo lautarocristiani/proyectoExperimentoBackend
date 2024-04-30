@@ -23,7 +23,6 @@ pool.getConnection()
 
 app.listen(process.env.DB_PORT, "0.0.0.0",  () => {
     console.log(`Servidor iniciado en el puerto ${process.env.DB_PORT}`)
-    console.log("PORT solo: ", PORT);
 });
 
 // Rutas API
