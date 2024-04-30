@@ -37,7 +37,7 @@ app.get("/", (req, res) => {
 })
 
 app.get("/usuarios", async (req, res) => {
-    const consulta = 'SELECT * FROM usuarios'
+    const consulta = 'SELECT * FROM `usuarios`'
     const resultado = await pool.query(consulta)
     res.json(resultado[0])
 })
