@@ -5,7 +5,13 @@ import { pool } from "./db.js"
 const app = express()
 
 // Habilitamos CORS
-app.use(cors())
+
+const corsOptions = {
+    origin: 'https://expfrontend.vercel.app',
+    optionsSuccessStatus: 200
+  };
+
+app.use(cors(corsOptions))
 
 // Middleware para parsear JSON entrante
 app.use(express.json())
