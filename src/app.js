@@ -1,6 +1,6 @@
 import express from "express"
 import cors from "cors"
-import { pool } from "./db.js"
+import { connection } from "./db.js"
 
 const app = express()
 
@@ -12,34 +12,14 @@ app.use(express.json())
 
 // Conexión a la base de datos
 
-pool.getConnection((err, connection) => {
+connection.connect((err) => {
     if (err) {
-        console.error("Error al obtener la conexión:", err);
-        return;
-    }
-    console.log("Conexión obtenida del pool.");
-
-    connection.query('SELECT * FROM `usuarios`', (error, results, fields) => {
-        // Asegúrate de liberar la conexión al pool
-        connection.release();
-
-        if (error) {
-            console.error("Error al realizar la consulta:", error);
-            return;
-        }
-
-        console.log(results);
-    });
-});
-
-pool.getConnection()
-    .then(connection => {
-        console.log('Conexión exitosa a la base de datos MySQL')
-        connection.release() // No olvides liberar la conexión
-    })
-    .catch(err => {
         console.error('Error al conectar a la base de datos:', err)
-    });
+        return
+    } else {
+        console.log('Conexión exitosa a la base de datos MySQL')
+    }
+})
 
 app.listen(process.env.DB_PORT, () => {
     console.log(`Servidor iniciado en el puerto ${process.env.DB_PORT}`)
