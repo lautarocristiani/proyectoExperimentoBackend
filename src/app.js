@@ -37,14 +37,19 @@ app.get("/", (req, res) => {
 })
 
 app.get("/usuarios", async (req, res) => {
-    const consulta = 'SELECT * FROM `usuarios`'
-    const resultado = await axios.get(consulta)
+    const consulta = 'SELECT * FROM usuarios'
+    const resultado = await pool.query(consulta)
     res.json(resultado[0])
 })
 
 app.post("/usuarios", async (req, res) => {
     const { nombre, apellido, email } = req.body;
-    const consulta = `INSERT INTO usuarios (${nombre}, ${apellido}, ${email}) VALUES (?, ?, ?)`
-    const resultado = await axios.post(consulta)
-    res.json(resultado)
-})
+    // Asegúrate de que los nombres de las columnas sean estáticos y correctos según tu esquema de DB
+    const consulta = `INSERT INTO usuarios (nombre, apellido, email) VALUES (?, ?, ?)`;
+    try {
+        const resultado = await pool.query(consulta, [nombre, apellido, email]);
+        res.json(resultado);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
