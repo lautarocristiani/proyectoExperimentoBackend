@@ -70,7 +70,7 @@ app.delete("/usuarios/:id", async (req, res) => {
     }
 });
 
-app.put("/usuarios", async (req, res) => {
+app.put("/usuarios/:id", async (req, res) => {
     const { id } = req.params;
     const { nombre, apellido, email } = req.body;
     const consulta = `UPDATE usuarios SET nombre = ?, apellido = ?, email = ? WHERE id = ?`;
