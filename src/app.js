@@ -25,11 +25,7 @@ app.listen(process.env.DB_PORT, () => {
 });
 
 // Rutas API
-app.get("/", (req, res) => {
-    res.send("Hello World!")
-})
-
-app.get("/usuarios", async (req, res) => {
+app.get("/", async (req, res) => {
     const consulta = 'SELECT * FROM `usuarios`'
     const resultado = await pool.query(consulta)
     res.json(resultado[0])
