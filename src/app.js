@@ -75,6 +75,9 @@ app.delete("/usuarios/:id", async (req, res) => {
 
     try {
         const resultado = await pool.query(consulta, [id]);
+        console.log(resultado.data.affectedRows);
+        console.log(resultado.data);
+        console.log(resultado);
         if (resultado.data.affectedRows > 0) {
             res.status(200).json({ message: "Usuario eliminado correctamente" });
         } else {
