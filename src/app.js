@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import { pool } from "./db.js"
+import axios from 'axios';
 
 const app = express()
 
@@ -86,3 +87,20 @@ app.put("/usuarios/:id", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.get("/grafico", (req, res) => {
+    const url = 'https://api.remarkets.primary.com.ar/auth/getToken';
+    const data = {
+      username: 'lautarocristiani200110465',
+      password: 'uxvinI9('
+    };
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    const resultado = axios.post(url, data, config)
+    res.json(resultado);
+    console.log(res.data);
+    console.log(res);
+})
