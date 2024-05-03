@@ -53,15 +53,21 @@ app.get("/usuarios", async (req, res) => {
 
 app.post("/usuarios", async (req, res) => {
     const { nombre, apellido, email } = req.body;
-    // Asegúrate de que los nombres de las columnas sean estáticos y correctos según tu esquema de DB
-    const consulta = `INSERT INTO usuarios (nombre, apellido, email) VALUES (?, ?, ?)`;
+    const consultaInsertar = `INSERT INTO usuarios (nombre, apellido, email) VALUES (?, ?, ?)`;
+    const consultaID = `SELECT LAST_INSERT_ID() as id`;
+
     try {
-        const resultado = await pool.query(consulta, [nombre, apellido, email]);
-        res.json(resultado);
+        await pool.query('START TRANSACTION');
+        await pool.query(consultaInsertar, [nombre, apellido, email]);
+        const resultadoID = await pool.query(consultaID);
+        await pool.query('COMMIT');
+        res.json({ id: resultadoID[0].id, nombre, apellido, email });
     } catch (error) {
+        await pool.query('ROLLBACK');
         res.status(500).json({ error: error.message });
     }
 });
+
 
 app.delete("/usuarios/:id", async (req, res) => {
     const { id } = req.params;
