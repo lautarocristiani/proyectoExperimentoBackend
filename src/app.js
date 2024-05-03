@@ -8,13 +8,20 @@ const app = express()
 // Habilitamos CORS
 
 const corsOptions = {
-    origin: 'https://expfrontend.vercel.app',
+    origin: function (origin, callback) {
+      const allowedOrigins = ['https://expfrontend.vercel.app', 'http://localhost:3000'];
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     optionsSuccessStatus: 200
   };
+  
+  app.use(cors(corsOptions));
+  
 
-app.use(cors(corsOptions))
-
-app.use(cors());
 // Middleware para parsear JSON entrante
 app.use(express.json())
 
