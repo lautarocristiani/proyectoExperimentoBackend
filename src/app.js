@@ -134,7 +134,7 @@ app.get("/instrumentos", async (req, res) => {
         // Ejemplo: Obtener todos los instrumentos
         const urlInstrumentos = 'https://api.remarkets.primary.com.ar/api/instrumentos';
         const respuestaInstrumentos = await axios.get(urlInstrumentos, apiConfig);
-
+        console.log('Instrumentos:', respuestaInstrumentos.data);
         // Asumiendo que necesitas más datos, puedes seguir haciendo más solicitudes aquí
         // ...
 
