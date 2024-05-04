@@ -143,8 +143,10 @@ app.get("/instrumentos", async (req, res) => {
           token,
           instrumentos: respuestaInstrumentos.data
         });
-        console.log(res);
-        console.log(respuestaInstrumentos.data);
+        console.log(res.json({
+            token,
+            instrumentos: respuestaInstrumentos.data
+          }));
 
     } catch (error) {
         console.error('Error al obtener el token:', error);
