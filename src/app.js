@@ -77,11 +77,14 @@ app.delete("/usuarios/:id", async (req, res) => {
         console.log(resultado);
         if (resultado.affectedRows  > 0) {
             res.status(200).json({ message: "Usuario eliminado correctamente" });
+            alert("Usuario eliminado correctamente");
         } else {
             res.status(404).json({ message: "Usuario no encontrado" });
+            alert("Usuario no encontrado");
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
+        alert("Error al eliminar usuario");
     }
 });
 
@@ -102,7 +105,7 @@ app.put("/usuarios/:id", async (req, res) => {
     }
 });
 
-app.get("/grafico", (req, res) => {
+app.get("/grafico", async (req, res) => {
     const url = 'https://api.remarkets.primary.com.ar/auth/getToken';
     const data = {
       username: 'lautarocristiani200110465',
@@ -113,8 +116,11 @@ app.get("/grafico", (req, res) => {
         'Content-Type': 'application/json'
       }
     };
-    const resultado = axios.post(url, data, config)
-    res.json(resultado);
-    console.log(res.data);
-    console.log(res);
+    try {
+        const resultado = await axios.post(url, data, config);
+        res.json(resultado.data);
+      } catch (error) {
+        console.error('Error al obtener el token:', error);
+        res.status(500).json({ error: 'Error al obtener el token' });
+      }
 })
