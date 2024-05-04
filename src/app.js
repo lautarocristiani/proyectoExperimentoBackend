@@ -119,6 +119,7 @@ app.get("/grafico", async (req, res) => {
     try {
         const resultado = await axios.post(url, data, config);
         res.json(resultado.data);
+        console.log('Obtenido el token:', resultado.data);
       } catch (error) {
         console.error('Error al obtener el token:', error);
         res.status(500).json({ error: 'Error al obtener el token' });
