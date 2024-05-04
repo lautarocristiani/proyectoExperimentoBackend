@@ -105,9 +105,9 @@ app.put("/usuarios/:id", async (req, res) => {
     }
 });
 
-app.get("/grafico", async (req, res) => {
-    const url = 'https://api.remarkets.primary.com.ar/auth/getToken';
-    const data = {
+app.get("/instrumentos", async (req, res) => {
+    const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
+    const credentials = {
       username: 'lautarocristiani200110465',
       password: 'uxvinI9('
     };
@@ -116,12 +116,38 @@ app.get("/grafico", async (req, res) => {
         'Content-Type': 'application/json'
       }
     };
+
     try {
-        const resultado = await axios.post(url, data, config);
-        res.json(resultado.data);
-        console.log('Obtenido el token:', resultado.data);
-      } catch (error) {
+        // Obtener el token
+        const responseToken = await axios.post(urlToken, credentials, config);
+        const token = responseToken.data.token; // Asegúrate de acceder correctamente al token en la respuesta
+
+        // Configuración para usar el token en futuras solicitudes
+        const apiConfig = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        };
+
+        // Realizar otras solicitudes con el token
+        // Ejemplo: Obtener todos los instrumentos
+        const urlInstrumentos = 'https://api.remarkets.primary.com.ar/api/instrumentos';
+        const respuestaInstrumentos = await axios.get(urlInstrumentos, apiConfig);
+
+        // Asumiendo que necesitas más datos, puedes seguir haciendo más solicitudes aquí
+        // ...
+
+        // Finalmente, enviar todos los datos necesarios al cliente
+        res.json({
+          token,
+          instrumentos: respuestaInstrumentos.data
+        });
+        console.log(res);
+        console.log(respuestaInstrumentos.data);
+
+    } catch (error) {
         console.error('Error al obtener el token:', error);
         res.status(500).json({ error: 'Error al obtener el token' });
-      }
-})
+    }
+});
