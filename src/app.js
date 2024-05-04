@@ -121,7 +121,8 @@ app.get("/instrumentos", async (req, res) => {
         // Obtener el token
         const responseToken = await axios.post(urlToken, credentials, config);
         const token = responseToken.data.token; // Asegúrate de acceder correctamente al token en la respuesta
-
+        console.log('Token:', token);
+        console.log(responseToken);
         // Configuración para usar el token en futuras solicitudes
         const apiConfig = {
           headers: {
