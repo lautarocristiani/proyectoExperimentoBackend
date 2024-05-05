@@ -109,8 +109,8 @@ app.get("/getToken", async (req, res) => {
     try {
         const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
         const headers = {
-            'X-Username': 'tuUsuario',
-            'X-Password': 'tuContraseña'
+            'X-Username': process.env['X-Username'],
+            'X-Password': process.env['X-Password']
         };
         const responseToken = await axios.post(urlToken, {}, { headers: headers });
         const token = responseToken.headers['X-auth-token'];
