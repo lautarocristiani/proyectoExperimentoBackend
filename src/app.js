@@ -1,7 +1,7 @@
 import express from "express"
 import cors from "cors"
 import { pool } from "./db.js"
-import axios from 'axios';
+import requi from 'axios';
 
 const app = express()
 
@@ -120,7 +120,7 @@ app.get("/instrumentos", async (req, res) => {
     try {
         // Obtener el token
         const responseToken = await axios.post(urlToken, credentials, config);
-        const token = responseToken.data.token; // Asegúrate de acceder correctamente al token en la respuesta
+        const token = responseToken.headers['x-auth-token']; // Asegúrate de acceder correctamente al token en la respuesta
         console.log('Token:', token);
         console.log(responseToken);
         // Configuración para usar el token en futuras solicitudes
