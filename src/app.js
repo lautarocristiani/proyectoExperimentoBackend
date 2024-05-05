@@ -105,48 +105,35 @@ app.put("/usuarios/:id", async (req, res) => {
     }
 });
 
-app.get("/instrumentos", async (req, res) => {
-    const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
-    const credentials = {
-      username: 'lautarocristiani200110465',
-      password: 'uxvinI9('
-    };
-    const config = {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
+app.get("/getToken", async (req, res) => {
     try {
-        // Obtener el token
-        const responseToken = await axios.post(urlToken, credentials, config);
-        const token = responseToken.headers['x-auth-token']; // Asegúrate de acceder correctamente al token en la respuesta
-        console.log('Token:', token);
-        console.log(responseToken);
-        // Configuración para usar el token en futuras solicitudes
-        const apiConfig = {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+        const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
+        const headers = {
+            'X-Username': 'tuUsuario',
+            'X-Password': 'tuContraseña'
         };
-
-        // Realizar otras solicitudes con el token
-        // Ejemplo: Obtener todos los instrumentos
-        const urlInstrumentos = 'https://api.remarkets.primary.com.ar/api/instrumentos';
-        const respuestaInstrumentos = await axios.get(urlInstrumentos, apiConfig);
-        console.log('Instrumentos:', respuestaInstrumentos.data);
-        // Asumiendo que necesitas más datos, puedes seguir haciendo más solicitudes aquí
-        // ...
-
-        // Finalmente, enviar todos los datos necesarios al cliente
-        res.json({
-          token,
-          instrumentos: respuestaInstrumentos.data
-        });
-
+        const responseToken = await axios.post(urlToken, {}, { headers: headers });
+        const token = responseToken.headers['X-auth-token'];
+        console.log("Token obtenido:", token);
+        res.json({ token: token });
     } catch (error) {
         console.error('Error al obtener el token:', error);
-        res.status(500).json({ error: 'Error al obtener el token' });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/getInstrumentDetails", async (req, res) => {
+    const token = req.headers['X-auth-token'];  // Asumimos que el token se envía como header en la solicitud
+    try {
+        const urlDetails = 'https://api.remarkets.primary.com.ar/rest/instruments/details';
+        const headers = {
+            'X-Auth-Token': token
+        };
+        const responseDetails = await axios.get(urlDetails, { headers: headers });
+        console.log("Detalles de los instrumentos:", responseDetails.data);
+        res.json(responseDetails.data);
+    } catch (error) {
+        console.error('Error al obtener detalles de los instrumentos:', error);
+        res.status(500).json({ error: error.message });
     }
 });
