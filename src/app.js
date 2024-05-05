@@ -1,7 +1,7 @@
 import express from "express"
 import cors from "cors"
 import { pool } from "./db.js"
-import requi from 'axios';
+import axios from 'axios';
 
 const app = express()
 
