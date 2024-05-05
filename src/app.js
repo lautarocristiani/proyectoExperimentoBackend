@@ -113,14 +113,21 @@ app.get("/getToken", async (req, res) => {
             'X-Password': process.env['X-Password']
         };
         const responseToken = await axios.post(urlToken, {}, { headers: headers });
-        const token = responseToken.headers['X-auth-token'];
-        console.log("Token obtenido:", token);
-        res.json({ token: token });
+        console.log("Respuesta completa:", responseToken.headers); // Ver todos los headers de respuesta
+        const token = responseToken.headers['x-auth-token']; // Asegúrate de que el nombre del header es correcto
+        if (token) {
+            console.log("Token obtenido:", token);
+            res.json({ token: token });
+        } else {
+            console.log("Token no encontrado en los headers:", responseToken.headers);
+            res.status(404).json({ error: 'Token no encontrado' });
+        }
     } catch (error) {
         console.error('Error al obtener el token:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 app.get("/getInstrumentDetails", async (req, res) => {
     const token = req.headers['X-auth-token'];  // Asumimos que el token se envía como header en la solicitud
