@@ -1,8 +1,10 @@
 import express from "express"
 import cors from "cors"
 import { pool } from "./db.js"
-import axios from 'axios';
+import axios from 'axios'; 
+import dotenv from 'dotenv';
 
+dotenv.config();
 const app = express()
 
 // Habilitamos CORS
@@ -17,12 +19,12 @@ const corsOptions = {
       }
     },
     optionsSuccessStatus: 200
-  };
-  
-  app.use(cors(corsOptions));
-  
+};
+
+app.use(cors(corsOptions));
 
 // Middleware para parsear JSON entrante
+
 app.use(express.json())
 
 // Conexión a la base de datos
@@ -36,14 +38,15 @@ pool.getConnection()
         console.error('Error al conectar a la base de datos:', err)
     });
 
-app.listen(process.env.PORT, "0.0.0.0",  () => {
-    console.log(`Servidor iniciado en el puerto ${process.env.PORT}`)
+app.listen(process.env.PORT || 3000, "0.0.0.0",  () => {
+    console.log(`Servidor iniciado en el puerto ${process.env.PORT || 3000}`)
 });
 
 // Rutas API
 app.get("/", (req, res) => {
     res.send("Hello World!")
 })
+
 
 app.get("/usuarios", async (req, res) => {
     const consulta = 'SELECT * FROM `usuarios`'
@@ -112,8 +115,9 @@ app.get("/getToken", async (req, res) => {
             'X-Username': process.env['X-Username'],
             'X-Password': process.env['X-Password']
         };
-        const responseToken = await axios.post(urlToken, {}, { headers: headers });
-        console.log("Respuesta completa:", responseToken.headers); // Ver todos los headers de respuesta
+        
+        const responseToken = await axios.post(urlToken, {}, { headers });
+        
         const token = responseToken.headers['x-auth-token']; // Asegúrate de que el nombre del header es correcto
         if (token) {
             console.log("Token obtenido:", token);
