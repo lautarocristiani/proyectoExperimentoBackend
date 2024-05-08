@@ -38,8 +38,8 @@ pool.getConnection()
         console.error('Error al conectar a la base de datos:', err)
     });
 
-app.listen(process.env.PORT || 3000, "0.0.0.0",  () => {
-    console.log(`Servidor iniciado en el puerto ${process.env.PORT || 3000}`)
+app.listen(process.env.PORT || 4000, "0.0.0.0",  () => {
+    console.log(`Servidor iniciado en el puerto ${process.env.PORT || 4000}`)
 });
 
 // Rutas API
@@ -108,43 +108,107 @@ app.put("/usuarios/:id", async (req, res) => {
     }
 });
 
-app.get("/getToken", async (req, res) => {
+
+// Variable global para almacenar el token
+let globalToken = null;
+
+// Función para obtener el token
+const fetchToken = async () => {
+    const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
+    const headers = {
+        'X-Username': process.env['X-Username'],
+        'X-Password': process.env['X-Password']
+    };
     try {
-        const urlToken = 'https://api.remarkets.primary.com.ar/auth/getToken';
-        const headers = {
-            'X-Username': process.env['X-Username'],
-            'X-Password': process.env['X-Password']
-        };
-        
         const responseToken = await axios.post(urlToken, {}, { headers });
-        
-        const token = responseToken.headers['x-auth-token']; // Asegúrate de que el nombre del header es correcto
-        if (token) {
-            console.log("Token obtenido:", token);
-            res.json({ token: token });
-        } else {
-            console.log("Token no encontrado en los headers:", responseToken.headers);
-            res.status(404).json({ error: 'Token no encontrado' });
-        }
+        globalToken = responseToken.headers['x-auth-token'];
+        console.log("Token actualizado:", globalToken);
     } catch (error) {
-        console.error('Error al obtener el token:', error);
+        console.error("Error al obtener el token:", error);
+    }
+};
+
+// Obtener el token
+fetchToken();
+
+// Función para realizar solicitudes API con manejo de token expirado
+const makeApiRequest = async (url, headers, res) => {
+    try {
+        const response = await axios.get(url, { headers });
+        return res.status(200).json(response.data);
+    } catch (error) {
+        if (error.response && error.response.status === 401) { // Error de autenticación
+            console.log("Token expirado, obteniendo un nuevo token...");
+            await fetchToken(); // Obtener un nuevo token
+            if (globalToken) {
+                headers['X-Auth-Token'] = globalToken; // Actualizar el token en los headers
+                try {
+                    const retryResponse = await axios.get(url, { headers });
+                    return res.status(200).json(retryResponse.data);
+                } catch (retryError) {
+                    console.error("Error después de reintento:", retryError);
+                    return res.status(500).json({ error: retryError.message });
+                }
+            } else {
+                return res.status(500).json({ error: 'No se pudo obtener un nuevo token.' });
+            }
+        } else {
+            console.error("Error en la solicitud API:", error);
+            return res.status(500).json({ error: error.message });
+        }
+    }
+};
+
+// Ruta que usa la función de manejo de solicitudes
+app.get("/getInstrumentDetails", async (req, res) => {
+
+    if (!globalToken) {
+        return res.status(403).json({ error: "Token no disponible. Obtenga un token primero." });
+    }
+
+    const urlDetails = 'https://api.remarkets.primary.com.ar/rest/instruments/details';
+    const headers = {
+        'X-Auth-Token': globalToken
+    };
+    
+    makeApiRequest(urlDetails, headers, res);
+});
+
+app.get("/getTrades", async (req, res) => {
+    const { symbol, date, dateFrom, dateTo } = req.query;
+    try {
+        const url = `https://api.remarkets.primary.com.ar/rest/data/getTrades`;
+        const headers = {
+            'X-Auth-Token': globalToken,
+            'marketId': 'ROFX',
+            'symbol': symbol,
+            'date': date,
+            'dateFrom': dateFrom,
+            'dateTo': dateTo
+        };
+        const response = await axios.get(url, { headers });
+        res.json(response.data);
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-
-app.get("/getInstrumentDetails", async (req, res) => {
-    const token = req.headers['X-auth-token'];  // Asumimos que el token se envía como header en la solicitud
+app.get("/getMarketData", async (req, res) => {
+    const { symbol } = req.query;
     try {
-        const urlDetails = 'https://api.remarkets.primary.com.ar/rest/instruments/details';
-        const headers = {
-            'X-Auth-Token': token
+        const url = `https://api.remarkets.primary.com.ar/rest/marketdata/get`;
+        const params = {
+            'marketId': 'ROFX',
+            'symbol': symbol,
+            'entries': 'BI,OF,LA,OP,CL,SE,OI',
+            'depth': 1
         };
-        const responseDetails = await axios.get(urlDetails, { headers: headers });
-        console.log("Detalles de los instrumentos:", responseDetails.data);
-        res.json(responseDetails.data);
+        const headers = {
+            'X-Auth-Token': globalToken
+        };
+        const response = await axios.get(url, { headers, params });
+        res.json(response.data);
     } catch (error) {
-        console.error('Error al obtener detalles de los instrumentos:', error);
         res.status(500).json({ error: error.message });
     }
 });
