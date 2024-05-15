@@ -8,7 +8,6 @@ dotenv.config();
 const app = express()
 
 // Habilitamos CORS
-
 const corsOptions = {
     origin: function (origin, callback) {
       const allowedOrigins = ['https://expfrontend.vercel.app', 'http://localhost:3000'];
@@ -24,11 +23,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Middleware para parsear JSON entrante
-
 app.use(express.json())
 
 // Conexión a la base de datos
-
 pool.getConnection()
     .then(async connection => {
         console.log('Conexión exitosa a la base de datos MySQL')
@@ -42,7 +39,7 @@ app.listen(process.env.PORT || 4000, "0.0.0.0",  () => {
     console.log(`Servidor iniciado en el puerto ${process.env.PORT || 4000}`)
 });
 
-// Rutas API
+// Rutas API Usuarios
 app.get("/", (req, res) => {
     res.send("Hello World!")
 })
@@ -131,84 +128,88 @@ const fetchToken = async () => {
 // Obtener el token
 fetchToken();
 
-// Función para realizar solicitudes API con manejo de token expirado
-const makeApiRequest = async (url, headers, res) => {
-    try {
-        const response = await axios.get(url, { headers });
-        return res.status(200).json(response.data);
-    } catch (error) {
-        if (error.response && error.response.status === 401) { // Error de autenticación
-            console.log("Token expirado, obteniendo un nuevo token...");
-            await fetchToken(); // Obtener un nuevo token
-            if (globalToken) {
-                headers['X-Auth-Token'] = globalToken; // Actualizar el token en los headers
-                try {
-                    const retryResponse = await axios.get(url, { headers });
-                    return res.status(200).json(retryResponse.data);
-                } catch (retryError) {
-                    console.error("Error después de reintento:", retryError);
-                    return res.status(500).json({ error: retryError.message });
-                }
-            } else {
-                return res.status(500).json({ error: 'No se pudo obtener un nuevo token.' });
-            }
-        } else {
-            console.error("Error en la solicitud API:", error);
-            return res.status(500).json({ error: error.message });
-        }
-    }
-};
-
-// Ruta que usa la función de manejo de solicitudes
+// Método para obtener detalles de los instrumentos
 app.get("/getInstrumentDetails", async (req, res) => {
-
-    if (!globalToken) {
-        return res.status(403).json({ error: "Token no disponible. Obtenga un token primero." });
-    }
-
-    const urlDetails = 'https://api.remarkets.primary.com.ar/rest/instruments/details';
-    const headers = {
-        'X-Auth-Token': globalToken
-    };
-    
-    makeApiRequest(urlDetails, headers, res);
-});
-
-app.get("/getTrades", async (req, res) => {
-    const { symbol, date, dateFrom, dateTo } = req.query;
+    const url = 'https://api.remarkets.primary.com.ar/rest/instruments/details';
+    const headers = { 'X-Auth-Token': globalToken };
     try {
-        const url = `https://api.remarkets.primary.com.ar/rest/data/getTrades`;
-        const headers = {
-            'X-Auth-Token': globalToken,
-            'marketId': 'ROFX',
-            'symbol': symbol,
-            'date': date,
-            'dateFrom': dateFrom,
-            'dateTo': dateTo
-        };
-        const response = await axios.get(url, { headers });
-        res.json(response.data);
+        const instrumentResponse = await axios.get(url, { headers });
+        const instrumentDetails = instrumentResponse.data;
+        res.status(200).json( instrumentDetails );
     } catch (error) {
+        console.error('Error fetching Instrument Details:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.get("/getMarketData", async (req, res) => {
-    const { symbol } = req.query;
+// Método para obtener trades
+app.get("/getTrades", async (req, res) => {
+    const { symbol, date, dateTo, intervalo } = req.query;
+    const url = `https://api.remarkets.primary.com.ar/rest/data/getTrades?marketId=ROFX&symbol=${symbol}&date=${date}&dateTo=${dateTo}&environment=REMARKETS`;
+    const headers = { 'X-Auth-Token': globalToken };
+
     try {
-        const url = `https://api.remarkets.primary.com.ar/rest/marketdata/get`;
-        const params = {
-            'marketId': 'ROFX',
-            'symbol': symbol,
-            'entries': 'BI,OF,LA,OP,CL,SE,OI',
-            'depth': 1
-        };
-        const headers = {
-            'X-Auth-Token': globalToken
-        };
-        const response = await axios.get(url, { headers, params });
-        res.json(response.data);
+        const tradesResponse = await axios.get(url, { headers });
+        const tradesData = tradesResponse.data.trades;  // Asegúrate de que esto accede correctamente al array de trades
+        const groupedTrades = processTrades(tradesData, intervalo); // Asegúrate de que tradesData es un array
+        res.status(200).json( groupedTrades );
     } catch (error) {
+        console.error('Error fetching trades:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Función para conseguir Open/High/Low/Close price y una fecha redondeada segun el intervalo
+function processTrades(trades, interval) {
+    const groupedTrades = {};
+    trades.forEach(trade => {
+        const time = new Date(trade.datetime).getTime();
+        const roundedTime = Math.floor(time / interval) * interval;
+
+        if (!groupedTrades[roundedTime]) {
+            groupedTrades[roundedTime] = {
+                open: trade.price,
+                high: trade.price,
+                low: trade.price,
+                close: trade.price,
+                date: new Date(roundedTime).getTime()
+            };
+        } else {
+            groupedTrades[roundedTime].high = Math.max(groupedTrades[roundedTime].high, trade.price);
+            groupedTrades[roundedTime].low = Math.min(groupedTrades[roundedTime].low, trade.price);
+            groupedTrades[roundedTime].close = trade.price; // El último precio en el intervalo
+        }
+    });
+    return Object.values(groupedTrades);
+}
+
+//Del día
+app.get("/getTodayTrades", async (req, res) => {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const { symbol } = req.query;
+    const url = `https://api.remarkets.primary.com.ar/rest/data/getTrades?marketId=ROFX&symbol=${symbol}&date=${today}&environment=REMARKETS`;
+    const headers = { 'X-Auth-Token': globalToken };
+    try {
+        const tradesResponse = await axios.get(url, { headers });
+        const todayTrades = tradesResponse.data;  // Asegúrate de que esto accede correctamente al array de trades
+        res.status(200).json( todayTrades );
+    } catch (error) {
+        console.error('Error fetching trades:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Método para obtener market data
+app.get("/getMarketData", async (req, res) => {
+    const { symbol, entries, depth } = req.query;
+    const url = `https://api.remarkets.primary.com.ar/rest/marketdata/get?marketId=ROFX&symbol=${symbol}&entries=${entries}&depth=${depth}`;
+    const headers = { 'X-Auth-Token': globalToken };
+    try {
+        const marketResponse = await axios.get(url, { headers });
+        const marketData = marketResponse.data;
+        res.status(200).json( marketData );
+    } catch (error) {
+        console.error('Error fetching Market data:', error);
         res.status(500).json({ error: error.message });
     }
 });
